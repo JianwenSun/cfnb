@@ -24,6 +24,7 @@
 - 🔐 [我要获取 Token](#-获取必要令牌重要)（GitHub / Cloudflare / WxPusher 三合一教程）
 - ⚙️ [我要调整参数](#%EF%B8%8F-配置说明完整参数详解)
 - ☁️ [我要配置 DNS 更新](#%EF%B8%8F-cloudflare-dns-批量更新说明)
+- 📤 [我要配置 GitHub 同步](#-配置-github-自动同步)
 - 🔗 [对接 EdgeTunnel 指南](#-%E5%AF%B9%E6%8E%A5-edgetunnel-20-%E6%8C%87%E5%8D%97)
 - ❓ [常见问题](#-常见问题)
 
@@ -350,6 +351,72 @@
 - 如需完全避免服务中断，可自行修改代码为增量更新（只增删差异部分）。
 
 ---
+
+## 📤 配置 GitHub 自动同步
+
+本工具支持每次运行后将 `ip.txt` 自动推送到您指定的 GitHub 仓库，方便通过 Raw 链接订阅节点列表。
+
+### 第一步：创建 GitHub 仓库
+
+1. 登录 GitHub，点击右上角 `+` → **New repository**。
+2. **Repository name** 可任意填写（如 `cf-ip`）。
+3. 仓库类型选择 **Private**（推荐）或 Public。
+4. **不要**勾选 “Add a README file”、“.gitignore” 等初始化选项。
+5. 点击 **Create repository**。
+
+### 第二步：初始化本地仓库并关联远程
+
+在项目根目录下打开终端（Windows 为 PowerShell，Linux 为终端），依次执行以下命令：
+
+```bash
+git init
+git remote add origin https://github.com/你的用户名/仓库名.git
+git branch -M main
+```
+
+> 💡 如果您是通过 `git clone` 命令下载的本项目，则本地仓库已自动关联远程，无需执行上述命令，直接跳到第三步。
+
+### 第三步：获取并填写 GitHub Token
+
+1. 按照 [获取必要令牌](#-获取必要令牌重要) 中的步骤获取 **GitHub Personal Access Token**（需勾选 `repo` 权限，过期时间设为 **No expiration**）。
+2. 编辑对应平台的推送脚本：
+   - **Windows**：用文本编辑器打开 `git_sync.ps1`
+   - **Linux**：用文本编辑器打开 `git_sync.sh`
+3. 将脚本开头部分的四个变量替换为您的真实信息：
+
+   ```powershell
+   # Windows (git_sync.ps1)
+   $github_token = "ghp_xxxxxxxxxxxxxxxxxxxx"
+   $github_username = "your_github_username"
+   $repo_name = "your_repo_name"
+   $branch = "main"
+   ```
+
+   ```bash
+   # Linux (git_sync.sh)
+   github_token="ghp_xxxxxxxxxxxxxxxxxxxx"
+   github_username="your_github_username"
+   repo_name="your_repo_name"
+   branch="main"
+   ```
+
+### 第四步：测试推送
+
+1. 确保项目目录下已有 `ip.txt` 文件（可先手动运行一次 `python main.py` 生成）。
+2. 手动执行推送脚本测试：
+   - **Windows**：双击运行 `git_sync.ps1` 或在 PowerShell 中执行 `.\git_sync.ps1`
+   - **Linux**：执行 `./git_sync.sh`
+3. 若终端显示 `✅ ip.txt 已推送到 GitHub`，则配置成功。
+4. 之后每次运行 `main.py`，程序都会自动调用推送脚本，无需人工干预。
+
+### 验证与订阅
+
+推送成功后，访问 `https://raw.githubusercontent.com/你的用户名/仓库名/refs/heads/分支名/ip.txt` 即可获取最新节点列表，供代理工具订阅使用。
+
+> 💡 若不需要 GitHub 同步功能，可在 `config.json` 中设置 `GITHUB_SYNC_MAX_RETRIES: 0` 即可关闭。
+
+---
+
 
 ## 🚀 对接 EdgeTunnel (2.0+) 指南
 
