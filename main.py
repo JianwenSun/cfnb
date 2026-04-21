@@ -42,35 +42,12 @@ def load_config():
     # 定义必填字段及其默认值（若配置文件中缺失则使用默认值）
     defaults = {
         "USE_GLOBAL_MODE": True,
-        "TCP_PROBES": 7,
-        "MIN_SUCCESS_RATE": 1.0,
-        "TEST_AVAILABILITY": True,
-        "FILTER_IPV6_AVAILABILITY": True,
-        "BANDWIDTH_CANDIDATES": 80,
         "GLOBAL_TOP_N": 16,
         "PER_COUNTRY_TOP_N": 1,
-        "MAX_WORKERS": 150,
-        "AVAILABILITY_WORKERS": 20,
-        "BANDWIDTH_WORKERS": 6,
+        "BANDWIDTH_CANDIDATES": 80,
+        "TCP_PROBES": 7,
+        "MIN_SUCCESS_RATE": 1.0,
         "TIMEOUT": 2.5,
-        "AVAILABILITY_TIMEOUT": 8,
-        "AVAILABILITY_RETRY_MAX": 2,
-        "AVAILABILITY_RETRY_DELAY": 5,
-        "BANDWIDTH_TIMEOUT": 5,
-        "BANDWIDTH_SIZE_MB": 1,
-        "BANDWIDTH_RETRY_MAX": 2,
-        "BANDWIDTH_RETRY_DELAY": 5,
-        "ENABLE_IP_PURITY_CHECK": True,
-        "IP_PURITY_API": "https://api.ipapi.is/",
-        "IP_PURITY_WORKERS": 10,
-        "IP_PURITY_TIMEOUT": 8,
-        "IP_PURITY_RETRY_MAX": 2,
-        "IP_PURITY_RETRY_DELAY": 5,
-        "IP_PURITY_FALLBACK": True,
-        "JSON_URL": "https://zip.cm.edu.kg/all.txt",
-        "AVAILABILITY_CHECK_API": "https://check-proxyip-api.cmliussss.net/check",
-        "BANDWIDTH_URL_TEMPLATE": "https://speed.cloudflare.com/__down?bytes={bytes}",
-        "OUTPUT_FILE": "ip.txt",
         "FILTER_COUNTRIES_ENABLED": False,
         "ALLOWED_COUNTRIES": [],
         "ENABLE_WXPUSHER": True,
@@ -83,6 +60,29 @@ def load_config():
         "CF_DNS_RECORD_NAME": "",
         "CF_TTL": 60,
         "CF_PROXIED": False,
+        "JSON_URL": "https://zip.cm.edu.kg/all.txt",
+        "OUTPUT_FILE": "ip.txt",
+        "TEST_AVAILABILITY": True,
+        "FILTER_IPV6_AVAILABILITY": True,
+        "AVAILABILITY_CHECK_API": "https://check-proxyip-api.cmliussss.net/check",
+        "AVAILABILITY_TIMEOUT": 8,
+        "AVAILABILITY_RETRY_MAX": 2,
+        "AVAILABILITY_RETRY_DELAY": 5,
+        "BANDWIDTH_SIZE_MB": 1,
+        "BANDWIDTH_TIMEOUT": 5,
+        "BANDWIDTH_RETRY_MAX": 2,
+        "BANDWIDTH_RETRY_DELAY": 5,
+        "BANDWIDTH_URL_TEMPLATE": "https://speed.cloudflare.com/__down?bytes={bytes}",
+        "ENABLE_IP_PURITY_CHECK": True,
+        "IP_PURITY_API": "https://api.ipapi.is/",
+        "IP_PURITY_WORKERS": 10,
+        "IP_PURITY_TIMEOUT": 8,
+        "IP_PURITY_RETRY_MAX": 2,
+        "IP_PURITY_RETRY_DELAY": 5,
+        "IP_PURITY_FALLBACK": True,
+        "MAX_WORKERS": 150,
+        "AVAILABILITY_WORKERS": 20,
+        "BANDWIDTH_WORKERS": 6,
         "DNS_UPDATE_MAX_RETRIES": 5,
         "DNS_UPDATE_RETRY_DELAY": 10,
         "GITHUB_SYNC_MAX_RETRIES": 5,
@@ -102,24 +102,31 @@ cfg = load_config()
 
 # 从配置中读取各项参数
 USE_GLOBAL_MODE = cfg["USE_GLOBAL_MODE"]
-TCP_PROBES = cfg["TCP_PROBES"]
-MIN_SUCCESS_RATE = cfg["MIN_SUCCESS_RATE"]
-TEST_AVAILABILITY = cfg["TEST_AVAILABILITY"]
-FILTER_IPV6_AVAILABILITY = cfg["FILTER_IPV6_AVAILABILITY"]
-BANDWIDTH_CANDIDATES = cfg["BANDWIDTH_CANDIDATES"]
 GLOBAL_TOP_N = cfg["GLOBAL_TOP_N"]
 PER_COUNTRY_TOP_N = cfg["PER_COUNTRY_TOP_N"]
-MAX_WORKERS = cfg["MAX_WORKERS"]
-AVAILABILITY_WORKERS = cfg["AVAILABILITY_WORKERS"]
-BANDWIDTH_WORKERS = cfg["BANDWIDTH_WORKERS"]
+BANDWIDTH_CANDIDATES = cfg["BANDWIDTH_CANDIDATES"]
+TCP_PROBES = cfg["TCP_PROBES"]
+MIN_SUCCESS_RATE = cfg["MIN_SUCCESS_RATE"]
 TIMEOUT = cfg["TIMEOUT"]
+FILTER_COUNTRIES_ENABLED = cfg["FILTER_COUNTRIES_ENABLED"]
+ALLOWED_COUNTRIES = cfg["ALLOWED_COUNTRIES"]
+ENABLE_WXPUSHER = cfg["ENABLE_WXPUSHER"]
+WXPUSHER_APP_TOKEN = cfg["WXPUSHER_APP_TOKEN"]
+WXPUSHER_UIDS = cfg["WXPUSHER_UIDS"]
+WXPUSHER_API_URL = cfg["WXPUSHER_API_URL"]
+JSON_URL = cfg["JSON_URL"]
+OUTPUT_FILE = cfg["OUTPUT_FILE"]
+TEST_AVAILABILITY = cfg["TEST_AVAILABILITY"]
+FILTER_IPV6_AVAILABILITY = cfg["FILTER_IPV6_AVAILABILITY"]
+AVAILABILITY_CHECK_API = cfg["AVAILABILITY_CHECK_API"]
 AVAILABILITY_TIMEOUT = cfg["AVAILABILITY_TIMEOUT"]
 AVAILABILITY_RETRY_MAX = cfg["AVAILABILITY_RETRY_MAX"]
 AVAILABILITY_RETRY_DELAY = cfg["AVAILABILITY_RETRY_DELAY"]
-BANDWIDTH_TIMEOUT = cfg["BANDWIDTH_TIMEOUT"]
 BANDWIDTH_SIZE_MB = cfg["BANDWIDTH_SIZE_MB"]
+BANDWIDTH_TIMEOUT = cfg["BANDWIDTH_TIMEOUT"]
 BANDWIDTH_RETRY_MAX = cfg["BANDWIDTH_RETRY_MAX"]
 BANDWIDTH_RETRY_DELAY = cfg["BANDWIDTH_RETRY_DELAY"]
+BANDWIDTH_URL_TEMPLATE = cfg["BANDWIDTH_URL_TEMPLATE"]
 ENABLE_IP_PURITY_CHECK = cfg["ENABLE_IP_PURITY_CHECK"]
 IP_PURITY_API = cfg["IP_PURITY_API"]
 IP_PURITY_WORKERS = cfg["IP_PURITY_WORKERS"]
@@ -127,16 +134,9 @@ IP_PURITY_TIMEOUT = cfg["IP_PURITY_TIMEOUT"]
 IP_PURITY_RETRY_MAX = cfg["IP_PURITY_RETRY_MAX"]
 IP_PURITY_RETRY_DELAY = cfg["IP_PURITY_RETRY_DELAY"]
 IP_PURITY_FALLBACK = cfg["IP_PURITY_FALLBACK"]
-JSON_URL = cfg["JSON_URL"]
-AVAILABILITY_CHECK_API = cfg["AVAILABILITY_CHECK_API"]
-BANDWIDTH_URL_TEMPLATE = cfg["BANDWIDTH_URL_TEMPLATE"]
-OUTPUT_FILE = cfg["OUTPUT_FILE"]
-FILTER_COUNTRIES_ENABLED = cfg["FILTER_COUNTRIES_ENABLED"]
-ALLOWED_COUNTRIES = cfg["ALLOWED_COUNTRIES"]
-ENABLE_WXPUSHER = cfg["ENABLE_WXPUSHER"]
-WXPUSHER_APP_TOKEN = cfg["WXPUSHER_APP_TOKEN"]
-WXPUSHER_UIDS = cfg["WXPUSHER_UIDS"]
-WXPUSHER_API_URL = cfg["WXPUSHER_API_URL"]
+MAX_WORKERS = cfg["MAX_WORKERS"]
+AVAILABILITY_WORKERS = cfg["AVAILABILITY_WORKERS"]
+BANDWIDTH_WORKERS = cfg["BANDWIDTH_WORKERS"]
 
 # 动态生成带宽测速完整 URL
 BANDWIDTH_URL = BANDWIDTH_URL_TEMPLATE.format(bytes=BANDWIDTH_SIZE_MB * 1024 * 1024)
@@ -620,7 +620,7 @@ def sync_to_github():
     根据操作系统调用相应的 Git 同步脚本，支持重试。
     """
     script_dir = os.path.dirname(os.path.abspath(__file__))
-    
+
     if sys.platform == "win32":
         script_name = "git_sync.ps1"
         interpreter = ["powershell", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File"]
@@ -751,7 +751,7 @@ def main():
         country_nodes = defaultdict(list)
         for node_str, lat, country, succ in results:
             country_nodes[country].append((node_str, lat, succ))
-        
+
         total_countries = len(country_nodes)
         # 每个国家分配的基础候选名额 = BANDWIDTH_CANDIDATES // 国家数，至少1个
         base_limit = max(1, BANDWIDTH_CANDIDATES // total_countries)

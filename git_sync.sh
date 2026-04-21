@@ -14,7 +14,7 @@ github_username="your_github_username"
 # 仓库名称
 repo_name="your_repo_name"
 # 目标分支
-branch="main"
+branch="your_branch"
 
 # ==================== 切换到脚本所在目录 ====================
 cd "$(dirname "$0")" || exit 1
