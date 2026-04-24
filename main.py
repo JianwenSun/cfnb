@@ -20,6 +20,11 @@ import json
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# ==================== 预编译正则 ====================
+NODE_LINE_PATTERN = re.compile(r"^\d+\.\d+\.\d+\.\d+:\d+#[A-Z]{2}$")
+NODE_PATTERN = re.compile(r"^(\d+\.\d+\.\d+\.\d+):(\d+)#(.+)$")
+IP_PORT_PATTERN = re.compile(r"^(\d+\.\d+\.\d+\.\d+):(\d+)#")
+
 # ==================== 加载配置文件 ====================
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
 
@@ -36,7 +41,6 @@ def load_config():
         print(f"❌ 错误：配置文件格式不正确 - {e}")
         sys.exit(1)
 
-    # 定义必填字段及其默认值
     defaults = {
         "USE_GLOBAL_MODE": True,
         "GLOBAL_TOP_N": 15,
@@ -44,6 +48,7 @@ def load_config():
         "BANDWIDTH_CANDIDATES": 90,
         "TCP_PROBES": 3,
         "MIN_SUCCESS_RATE": 1.0,
+        "TCP_PREFILTER_TIMEOUT": 1.0,
         "TIMEOUT": 2.0,
         "SOCKET_DEFAULT_TIMEOUT": 3,
         "PROGRESS_PRINT_INTERVAL": 1,
@@ -82,6 +87,7 @@ def load_config():
             "IR", "KP", "LY", "MO", "NG", "NL", "PK", "RU", "SD", "SO",
             "SY", "TH", "TW", "UA", "VE", "VN", "YE", "ZW"
         ],
+        "DNS_UPDATE_TARGET_COUNT": 15,
         "BANDWIDTH_SIZE_MB": 0.5,
         "BANDWIDTH_TIMEOUT": 3,
         "BANDWIDTH_RETRY_MAX": 2,
@@ -89,6 +95,8 @@ def load_config():
         "BANDWIDTH_URL_TEMPLATE": "https://speed.cloudflare.com/__down?bytes={bytes}",
         "BANDWIDTH_PROCESS_BUFFER": 2,
         "BANDWIDTH_CONNECT_TIMEOUT": 3,
+        "CURL_SPEED_LIMIT": 10240,
+        "CURL_SPEED_TIME": 2,
         "MAX_WORKERS": 150,
         "AVAILABILITY_WORKERS": 5,
         "BANDWIDTH_WORKERS": 5,
@@ -114,6 +122,7 @@ PER_COUNTRY_TOP_N = cfg["PER_COUNTRY_TOP_N"]
 BANDWIDTH_CANDIDATES = cfg["BANDWIDTH_CANDIDATES"]
 TCP_PROBES = cfg["TCP_PROBES"]
 MIN_SUCCESS_RATE = cfg["MIN_SUCCESS_RATE"]
+TCP_PREFILTER_TIMEOUT = cfg["TCP_PREFILTER_TIMEOUT"]
 TIMEOUT = cfg["TIMEOUT"]
 SOCKET_DEFAULT_TIMEOUT = cfg["SOCKET_DEFAULT_TIMEOUT"]
 PROGRESS_PRINT_INTERVAL = cfg["PROGRESS_PRINT_INTERVAL"]
@@ -148,6 +157,7 @@ AVAILABILITY_RETRY_DELAY = cfg["AVAILABILITY_RETRY_DELAY"]
 FILTER_IPV6_AVAILABILITY = cfg["FILTER_IPV6_AVAILABILITY"]
 FILTER_BLOCKED_COUNTRIES_ENABLED = cfg["FILTER_BLOCKED_COUNTRIES_ENABLED"]
 BLOCKED_COUNTRIES = cfg["BLOCKED_COUNTRIES"]
+DNS_UPDATE_TARGET_COUNT = cfg["DNS_UPDATE_TARGET_COUNT"]
 BANDWIDTH_SIZE_MB = cfg["BANDWIDTH_SIZE_MB"]
 BANDWIDTH_TIMEOUT = cfg["BANDWIDTH_TIMEOUT"]
 BANDWIDTH_RETRY_MAX = cfg["BANDWIDTH_RETRY_MAX"]
@@ -155,6 +165,8 @@ BANDWIDTH_RETRY_DELAY = cfg["BANDWIDTH_RETRY_DELAY"]
 BANDWIDTH_URL_TEMPLATE = cfg["BANDWIDTH_URL_TEMPLATE"]
 BANDWIDTH_PROCESS_BUFFER = cfg["BANDWIDTH_PROCESS_BUFFER"]
 BANDWIDTH_CONNECT_TIMEOUT = cfg["BANDWIDTH_CONNECT_TIMEOUT"]
+CURL_SPEED_LIMIT = cfg["CURL_SPEED_LIMIT"]
+CURL_SPEED_TIME = cfg["CURL_SPEED_TIME"]
 MAX_WORKERS = cfg["MAX_WORKERS"]
 AVAILABILITY_WORKERS = cfg["AVAILABILITY_WORKERS"]
 BANDWIDTH_WORKERS = cfg["BANDWIDTH_WORKERS"]
@@ -205,7 +217,7 @@ def fetch_nodes():
             lines = [line.strip() for line in resp.text.splitlines() if line.strip() and not line.startswith('#')]
             nodes = []
             for line in lines:
-                if re.match(r"^\d+\.\d+\.\d+\.\d+:\d+#[A-Z]{2}$", line):
+                if NODE_LINE_PATTERN.match(line):
                     nodes.append(line)
                 else:
                     print(f"警告：跳过格式不正确的行：{line}")
@@ -226,9 +238,19 @@ def fetch_nodes():
                 sys.exit(1)
 
 def test_tcp_latency(ip, port, timeout=TIMEOUT, probes=TCP_PROBES):
-    min_latency = float("inf")
-    success = 0
-    for _ in range(probes):
+    # 快速预检
+    try:
+        start = time.time()
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(TCP_PREFILTER_TIMEOUT)
+            sock.connect((ip, int(port)))
+        min_latency = time.time() - start
+        success = 1
+    except Exception:
+        return float("inf"), 0
+
+    # 剩余正式测试
+    for _ in range(probes - 1):
         try:
             start = time.time()
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
@@ -240,10 +262,11 @@ def test_tcp_latency(ip, port, timeout=TIMEOUT, probes=TCP_PROBES):
             success += 1
         except Exception:
             continue
+
     return min_latency, success
 
 def test_node(node_str):
-    m = re.match(r"^(\d+\.\d+\.\d+\.\d+):(\d+)#(.+)$", node_str)
+    m = NODE_PATTERN.match(node_str)
     if not m:
         return None
     ip, port, country = m.groups()
@@ -255,11 +278,7 @@ def test_node(node_str):
     return (node_str, min_lat, country, success)
 
 def check_availability(node_str):
-    """
-    检测单个节点是否可用，并返回协议栈信息。
-    返回 (node_str, is_ok, inferred_stack, exit_info)
-    """
-    m = re.match(r"^(\d+\.\d+\.\d+\.\d+):(\d+)#", node_str)
+    m = IP_PORT_PATTERN.match(node_str)
     if not m:
         return (node_str, False, "unknown", {})
     ip, port = m.group(1), m.group(2)
@@ -340,7 +359,7 @@ def availability_filter_with_retry(candidates):
     return candidates, {}, {}
 
 def measure_bandwidth_curl(node_str):
-    m = re.match(r"^(\d+\.\d+\.\d+\.\d+):(\d+)#", node_str)
+    m = IP_PORT_PATTERN.match(node_str)
     if not m:
         return (node_str, 0)
     ip, port = m.group(1), m.group(2)
@@ -349,6 +368,8 @@ def measure_bandwidth_curl(node_str):
     curl_cmd = [
         "curl", "-s", "-o", null_device,
         "-w", "%{size_download} %{time_total}",
+        "--speed-limit", str(CURL_SPEED_LIMIT),
+        "--speed-time", str(CURL_SPEED_TIME),
         "--resolve", f"speed.cloudflare.com:{port}:{ip}",
         "--connect-timeout", str(BANDWIDTH_CONNECT_TIMEOUT),
         "--max-time", str(BANDWIDTH_TIMEOUT),
@@ -382,6 +403,7 @@ def bandwidth_filter(candidates):
     results = []
     completed = 0
     total = len(candidates)
+    last_print = time.time()
 
     with ThreadPoolExecutor(max_workers=BANDWIDTH_WORKERS) as executor:
         futures = {executor.submit(measure_bandwidth_curl, node): node for node in candidates}
@@ -390,16 +412,22 @@ def bandwidth_filter(candidates):
             node, speed = future.result()
             if speed > 0:
                 results.append((node, speed))
-            print(f"\r[带宽测速] 进度：{completed}/{total} ({(completed/total)*100:.1f}%)", end="", flush=True)
+            now = time.time()
+            if now - last_print >= PROGRESS_PRINT_INTERVAL or completed == total:
+                print(f"\r[带宽测速] 进度：{completed}/{total} ({(completed/total)*100:.1f}%)", end="", flush=True)
+                last_print = now
 
     print()
     results.sort(key=lambda x: x[1], reverse=True)
     return results
 
-def batch_update_cloudflare_dns(ip_list, ip_info=None, full_bw_results=None, target_count=16, latency_map=None):
+def batch_update_cloudflare_dns(ip_list, ip_info=None, full_bw_results=None, target_count=None, latency_map=None):
     if not cfg.get("CF_ENABLED", False):
         print("Cloudflare DNS 批量更新未启用。")
         return
+
+    if target_count is None:
+        target_count = cfg.get("DNS_UPDATE_TARGET_COUNT", 15)
 
     dns_ip_list = []
     dns_node_list = []
@@ -413,21 +441,18 @@ def batch_update_cloudflare_dns(ip_list, ip_info=None, full_bw_results=None, tar
             blocked_set = {c.upper() for c in cfg.get("BLOCKED_COUNTRIES", [])}
 
         for node_str, speed in full_bw_results:
-            # 0. 端口过滤
             if ':' in node_str:
                 port = node_str.split(':')[1].split('#')[0]
                 if port != '443':
                     filtered_by_port += 1
                     continue
 
-            # 1. IPv6 过滤
             if cfg.get("FILTER_IPV6_AVAILABILITY", False):
                 stack = ip_info.get(node_str, "unknown")
                 if stack == "ipv6_only":
                     filtered_by_ipv6 += 1
                     continue
 
-            # 2. 屏蔽国家过滤
             if blocked_set and '#' in node_str:
                 country = node_str.split('#')[-1].upper()
                 if country in blocked_set:
@@ -462,7 +487,6 @@ def batch_update_cloudflare_dns(ip_list, ip_info=None, full_bw_results=None, tar
             send_wxpusher_notification(content=msg, summary="DNS 更新跳过")
             return
 
-    # 去重
     seen = set()
     unique_ips = []
     unique_nodes = []
@@ -649,6 +673,7 @@ def main():
 
     results = []
     completed = 0
+    last_print = time.time()
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = {executor.submit(test_node, node): node for node in nodes}
         for future in as_completed(futures):
@@ -656,8 +681,10 @@ def main():
             res = future.result()
             if res:
                 results.append(res)
-            if completed % max(1, int(total / 100)) == 0 or completed == total:
+            now = time.time()
+            if now - last_print >= PROGRESS_PRINT_INTERVAL or completed == total:
                 print(f"\r进度：{completed}/{total} ({(completed/total)*100:.1f}%)", end="", flush=True)
+                last_print = now
 
     print("\nTCP 测试完成！")
     if not results:
@@ -754,7 +781,6 @@ def main():
         print(f"读取 {OUTPUT_FILE} 时发生错误: {e}")
 
     target_dns_count = GLOBAL_TOP_N if USE_GLOBAL_MODE else PER_COUNTRY_TOP_N
-    # 直接使用原始带宽测速结果 (bw_results) 进行 DNS 更新，不再经过纯净度过滤
     batch_update_cloudflare_dns(
         ip_list,
         ip_info=avail_ip_info,
