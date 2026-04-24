@@ -43,7 +43,7 @@
 | 🌍 **国家过滤前置** | TCP 测试前即过滤指定国家（减少无效测试） |
 | ☁️ **Cloudflare DNS 更新** | 批量替换同名 A 记录 |
 | 📬 **微信实时通知** | 集成 WxPusher，异常/结果推送 |
-| 🔄 **定时自动运行** | Windows 计划任务 / Linux cron，每 15 分钟 |
+| 🔄 **定时自动运行** | Windows 计划任务 / Linux cron，每 5 分钟 |
 | 🚀 **一键部署** | `setup.ps1` / `setup.sh` 自动安装依赖并配置 |
 | 📤 **GitHub 自动同步** | `ip.txt` 推送至仓库，方便订阅 |
 | 🔒 **隐私保护** | `.gitignore` 忽略敏感文件 |
@@ -91,7 +91,7 @@
 2. **配置各项令牌（见下一节）**  
    根据需求获取并填写 GitHub Token、Cloudflare API Token 和 WxPusher 凭证。
 
-> 💡 部署脚本会自动安装依赖、创建 `.gitignore` 并配置定时任务（每 15 分钟整点运行）。
+> 💡 部署脚本会自动安装依赖、创建 `.gitignore` 并配置定时任务（每 5 分钟整点运行）。
 
 ---
 
@@ -171,7 +171,7 @@ python3 main.py
 4. （可选）手动创建计划任务：
    - 按 `Win + R`，输入 `taskschd.msc` 打开任务计划程序。
    - 创建任务，名称 `Cloudflare IP 优选`，勾选“不管用户是否登录都要运行”和“使用最高权限运行”。
-   - 触发器：新建 → 开始任务“按预定计划” → 设置“一次”，开始时间为下一个整15分钟时刻；高级设置中勾选“重复任务间隔”，选择“15分钟”，持续时间“无限期”。
+   - 触发器：新建 → 开始任务“按预定计划” → 设置“一次”，开始时间为下一个整5分钟时刻；高级设置中勾选“重复任务间隔”，选择“5分钟”，持续时间“无限期”。
    - 操作：新建 → 操作“启动程序”，程序填写 `python.exe` 路径，参数填写 `main.py` 完整路径，起始于填写项目目录。
    - 在 **“设置”** 选项卡中，将 **“优先级”** 下拉框设为 **“高”**。
    - 点击确定，输入 Windows 登录密码保存。
@@ -193,7 +193,7 @@ python3 main.py
    ```
 4. （可选）添加 cron 任务：
    ```bash
-   (crontab -l 2>/dev/null; echo "0,15,30,45 * * * * cd $(pwd) && nice -n -10 /usr/bin/python3 $(pwd)/main.py >> $(pwd)/cron.log 2>&1") | crontab -
+   (crontab -l 2>/dev/null; echo "*/5 * * * * cd $(pwd) && nice -n -10 /usr/bin/python3 $(pwd)/main.py >> $(pwd)/cron.log 2>&1") | crontab -
    ```
 5. 验证：`crontab -l`
 
@@ -205,8 +205,8 @@ python3 main.py
 
 | 平台 | 方式 | 行为 |
 | :--- | :--- | :--- |
-| Windows | 计划任务 `Cloudflare IP 优选` | 从下一个整 15 分钟开始，之后每 15 分钟**永久重复** |
-| Linux | cron 定时任务 | 分钟字段 `0,15,30,45`，整点对齐 |
+| Windows | 计划任务 `Cloudflare IP 优选` | 从下一个整 5 分钟开始，之后每 5 分钟**永久重复** |
+| Linux | cron 定时任务 | 分钟字段为 `*/5`，整点对齐 |
 
 **日志查看**：
 - Windows：任务计划程序中查看历史记录。
@@ -331,9 +331,9 @@ python3 main.py
 
 | 参数 | 类型 | 默认值 | 说明 |
 | :--- | :--- | :--- | :--- |
-| `MAX_WORKERS` | `int` | `150` | TCP 并发测试最大线程数 |
-| `AVAILABILITY_WORKERS` | `int` | `5` | 可用性检测并发数 |
-| `BANDWIDTH_WORKERS` | `int` | `5` | 带宽测速并发数（建议不超过 10） |
+| `MAX_WORKERS` | `int` | `200` | TCP 并发测试最大线程数 |
+| `AVAILABILITY_WORKERS` | `int` | `10` | 可用性检测并发数 |
+| `BANDWIDTH_WORKERS` | `int` | `10` | 带宽测速并发数（建议不超过 10） |
 
 **重试策略配置**
 

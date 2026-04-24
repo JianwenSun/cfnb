@@ -68,7 +68,7 @@ Write-Host "工作目录: $ScriptDir`n" -ForegroundColor Gray
 
 # ==================== 计划任务配置 ====================
 $TaskName = "Cloudflare IP 优选"
-$TaskIntervalMinutes = 15
+$TaskIntervalMinutes = 5
 $PythonExePath = $null
 $PythonScriptPath = Join-Path $ScriptDir "main.py"
 $WorkingDirectory = $ScriptDir
@@ -79,9 +79,9 @@ function Refresh-EnvPath {
     $env:Path = [System.Environment]::GetEnvironmentVariable("Path","Machine") + ";" + [System.Environment]::GetEnvironmentVariable("Path","User")
 }
 
-# ---------- 计算下一个整点15分钟时间（用于首次触发）----------
+# ---------- 计算下一个整点5分钟时间（用于首次触发）----------
 function Get-NextAlignedTime {
-    param([int]$IntervalMinutes = 15)
+    param([int]$IntervalMinutes = 5)
     $now = Get-Date
     # 计算当前分钟数距离下一个 Interval 分钟整点的分钟数
     $currentTotalMinutes = $now.Hour * 60 + $now.Minute
@@ -208,7 +208,7 @@ try {
     $taskDefinition.Settings.AllowHardTerminate = $true
     $taskDefinition.Settings.ExecutionTimeLimit = "PT72H"
     $taskDefinition.Settings.MultipleInstances = 3
-    $taskDefinition.Settings.Priority = 7
+    $taskDefinition.Settings.Priority = 1
     $taskDefinition.Settings.DisallowStartIfOnBatteries = $true
     $taskDefinition.Settings.StopIfGoingOnBatteries = $true
 

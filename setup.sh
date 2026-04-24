@@ -25,7 +25,7 @@ cd "$SCRIPT_DIR"
 echo -e "工作目录: $SCRIPT_DIR\n"
 
 # ==================== 配置 ====================
-TASK_INTERVAL_MINUTES=15
+TASK_INTERVAL_MINUTES=5
 PYTHON_SCRIPT="main.py"
 # =============================================
 
@@ -163,10 +163,10 @@ if [ ! -f "$PYTHON_SCRIPT" ]; then
     exit 1
 fi
 
-# ---------- 4. 配置 cron 定时任务（对齐 Windows 的下个整15分开始 + 每15分钟重复） ----------
+# ---------- 4. 配置 cron 定时任务（对齐 Windows 的下个整5分开始 + 每5分钟重复） ----------
 echo -e "${GREEN}[4/4] 配置定时任务（每${TASK_INTERVAL_MINUTES}分钟运行一次）...${NC}"
 
-# 计算下一个整 15 分钟时刻（用于显示）
+# 计算下一个整 5 分钟时刻（用于显示）
 calc_next_aligned() {
     local interval=$1
     local current_min=$(date +%M)
@@ -183,8 +183,8 @@ calc_next_aligned() {
 NEXT_RUN=$(calc_next_aligned $TASK_INTERVAL_MINUTES)
 echo -e "   首次运行将发生在: ${CYAN}$NEXT_RUN${NC}（之后每 ${TASK_INTERVAL_MINUTES} 分钟运行一次）"
 
-# 构建 cron 表达式：分钟字段为 0,15,30,45
-CRON_MINUTE_FIELD="0,15,30,45"
+# 构建 cron 表达式：分钟字段为 */5（每5分钟）
+CRON_MINUTE_FIELD="*/5"
 PYTHON_PATH=$(which python3)
 
 # 智能检测优先级前缀（对齐 Windows 的高优先级逻辑）
@@ -197,7 +197,7 @@ else
 fi
 
 CRON_CMD="$CRON_MINUTE_FIELD * * * * cd \"$SCRIPT_DIR\" && $NICE_PREFIX \"$PYTHON_PATH\" \"$SCRIPT_DIR/$PYTHON_SCRIPT\" >> \"$SCRIPT_DIR/cron.log\" 2>&1"
-CRON_COMMENT="# Cloudflare IP 优选工具定时任务（每15分钟，整点对齐）"
+CRON_COMMENT="# Cloudflare IP 优选工具定时任务（每5分钟，整点对齐）"
 
 # 检查是否已存在相同任务（基于脚本路径去重）
 if crontab -l 2>/dev/null | grep -F "$SCRIPT_DIR/$PYTHON_SCRIPT" > /dev/null; then
@@ -205,7 +205,7 @@ if crontab -l 2>/dev/null | grep -F "$SCRIPT_DIR/$PYTHON_SCRIPT" > /dev/null; th
 else
     # 添加新任务
     (crontab -l 2>/dev/null || true; echo "$CRON_COMMENT"; echo "$CRON_CMD") | crontab -
-    echo -e "${GREEN}✅ 定时任务已添加（每${TASK_INTERVAL_MINUTES}分钟，从下一个整15分钟开始）${NC}"
+    echo -e "${GREEN}✅ 定时任务已添加（每${TASK_INTERVAL_MINUTES}分钟，从下一个整5分钟开始）${NC}"
 fi
 
 echo -e "   执行命令: $NICE_PREFIX $PYTHON_PATH $SCRIPT_DIR/$PYTHON_SCRIPT"

@@ -137,13 +137,13 @@
     "BANDWIDTH_CONNECT_TIMEOUT": 3,
     "_comment_BANDWIDTH_CONNECT_TIMEOUT": "curl 测速连接超时（秒）",
 
-    "MAX_WORKERS": 150,
+    "MAX_WORKERS": 200,
     "_comment_MAX_WORKERS": "TCP 并发测试的最大线程数",
 
-    "AVAILABILITY_WORKERS": 5,
+    "AVAILABILITY_WORKERS": 10,
     "_comment_AVAILABILITY_WORKERS": "可用性检测的并发线程数",
 
-    "BANDWIDTH_WORKERS": 5,
+    "BANDWIDTH_WORKERS": 10,
     "_comment_BANDWIDTH_WORKERS": "带宽测速的并发线程数",
 
     "_comment_retry": "重试策略配置",
