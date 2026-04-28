@@ -166,7 +166,7 @@ def load_config():
         "BANDWIDTH_URL_TEMPLATE": "https://speed.cloudflare.com/__down?bytes={bytes}",
         "BANDWIDTH_PROCESS_BUFFER": 2,
         "BANDWIDTH_CONNECT_TIMEOUT": 3,
-        "MAX_WORKERS": 200,
+        "MAX_WORKERS": 400,
         "AVAILABILITY_WORKERS": 10,
         "FALLBACK_WORKERS": 10,
         "BANDWIDTH_WORKERS": 10,
