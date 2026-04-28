@@ -4,10 +4,10 @@
     "USE_GLOBAL_MODE": true,
     "_comment_USE_GLOBAL_MODE": "true=全局最优15个；false=每个国家最优1个",
 
-    "GLOBAL_TOP_N": 15,
+    "GLOBAL_TOP_N": 150,
     "_comment_GLOBAL_TOP_N": "全局模式下最终保留的节点数量",
 
-    "PER_COUNTRY_TOP_N": 1,
+    "PER_COUNTRY_TOP_N": 10,
     "_comment_PER_COUNTRY_TOP_N": "分国家模式下每个国家保留的节点数量",
 
     "BANDWIDTH_CANDIDATES": 90,
@@ -146,7 +146,7 @@
     "BANDWIDTH_CONNECT_TIMEOUT": 3,
     "_comment_BANDWIDTH_CONNECT_TIMEOUT": "curl 测速连接超时（秒）",
 
-    "MAX_WORKERS": 200,
+    "MAX_WORKERS": 400,
     "_comment_MAX_WORKERS": "TCP 并发测试的最大线程数",
 
     "AVAILABILITY_WORKERS": 10,

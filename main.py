@@ -115,8 +115,8 @@ def load_config():
 
     defaults = {
         "USE_GLOBAL_MODE": True,
-        "GLOBAL_TOP_N": 15,
-        "PER_COUNTRY_TOP_N": 1,
+        "GLOBAL_TOP_N": 100,
+        "PER_COUNTRY_TOP_N": 3,
         "BANDWIDTH_CANDIDATES": 90,
         "TCP_PROBES": 3,
         "MIN_SUCCESS_RATE": 1.0,
