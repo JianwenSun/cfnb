@@ -4,5 +4,7 @@
     "python.terminal.activateEnvironment": true,
     "python.analysis.extraPaths": [
         "${workspaceFolder}"
-    ]
+    ],
+    "clawMode.mode": "editor",
+    "workbench.activityBar.location": "default"
 }
