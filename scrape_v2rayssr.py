@@ -118,7 +118,12 @@ def save_to_file(data, filename='v2rayssr.txt'):
                 ip = row[2]
                 line_type = row[1]
                 tag = line_mapping.get(line_type, line_type)
-                output = f"{ip}:443#{tag}"
+                
+                if ':' in ip and not ip.startswith('['):
+                    output = f"[{ip}]:443#{tag}"
+                else:
+                    output = f"{ip}:443#{tag}"
+                
                 f.write(output + '\n')
     
     print(f"成功保存 {len(data)} 条数据到 {filename}")
@@ -172,7 +177,11 @@ def main():
                 ip = row[2]
                 line_type = row[1]
                 tag = line_mapping.get(line_type, line_type)
-                print(f"{i}. {ip}:443#{tag}")
+                
+                if ':' in ip and not ip.startswith('['):
+                    print(f"{i}. [{ip}]:443#{tag}")
+                else:
+                    print(f"{i}. {ip}:443#{tag}")
     else:
         print()
         print("未能从HTML中提取表格数据")
