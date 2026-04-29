@@ -1,0 +1,1 @@
+python3 convert_cfst.py result.csv output.txt 
